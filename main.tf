@@ -1,15 +1,25 @@
-### Place your code here ###
+locals {
+  secret = bcrypt(var.plain_text, var.bcrypt_options.cost)
+}
 
-resource "shell_script" "example" {
-  lifecycle_commands {
-    create = "echo '{\"cluster_name\":\"$CLUSTER_NAME\"}'"
-    update = "echo '{\"example\":\"$CLUSTER_NAME\"}'"
-    read   = "echo '{\"example\":\"$CLUSTER_NAME\"}'"
-    delete = "echo '{}'"
+resource "shell_script" "password" {
+  triggers = {
+    plain_text_hash = sha256(local.plain_text_id)
   }
 
-  environment = {
-    KUBECONFIG   = local.kubeconfig
-    CLUSTER_NAME = var.cluster_name
+  sensitive_environment = {
+    SECRET = local.secret
+  }
+
+  lifecycle {
+    ignore_changes = [sensitive_environment]
+  }
+
+  lifecycle_commands {
+    create = <<-EOF
+      echo "{\"secret\":\"$SECRET\"}"
+    EOF
+
+    delete = "echo {}"
   }
 }

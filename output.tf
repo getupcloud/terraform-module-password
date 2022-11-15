@@ -1,4 +1,3 @@
-output "example" {
-  value = "SOME VALUE"
+output "secret" {
+  value = shell_script.password.output["secret"]
 }
-
